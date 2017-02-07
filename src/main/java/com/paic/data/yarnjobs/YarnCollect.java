@@ -3,6 +3,8 @@ package com.paic.data.yarnjobs;
 import com.alibaba.fastjson.JSONObject;
 import com.paic.data.yarnjobs.bean.App;
 import com.paic.data.yarnjobs.bean.AppsBean;
+import com.paic.data.yarnjobs.bean.Job;
+import com.paic.data.yarnjobs.bean.JobsBean;
 import com.paic.data.yarnjobs.util.HttpUtils;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.StringUtils;
@@ -49,9 +51,47 @@ public class YarnCollect {
         confWriter.append(buf);
     }
 
+    public void jobs(Map<String, String> params) throws Exception {
+        String jobsUrl = Constant.JOB_HISTORY_URL + "/ws/v1/history/mapreduce/jobs";
+        logger.info("jobsUrl : " + jobsUrl + "  params:" + params);
+        String resp = HttpUtils.get(jobsUrl, null, params);
+        if (StringUtils.isBlank(resp))
+            return;
 
-    public void scanJobs(Map<String, String> params) throws Exception {
-        String resp = HttpUtils.get(Constant.RESOURCE_MANAGER_URL + "/ws/v1/cluster/apps/", null, params);
+        JobsBean jobs = JSONObject.parseObject(resp, JobsBean.class);
+        if (jobs == null || jobs.getJobs() == null || jobs.getJobs().getJob() == null)
+            return;
+
+        File dir = new File(Constant.TMP_DIR + File.separator + "jobs");
+        if (!dir.isDirectory())
+            dir.mkdirs();
+
+        BufferedWriter jobsWriter = new BufferedWriter(new FileWriter(Constant.TMP_DIR + File.separator + "apps" + File.separator + hivePartition));
+        for (Job job : jobs.getJobs().getJob()) {
+            jobsWriter.append(job.toString());
+            jobsWriter.append('\n');
+        }
+        jobsWriter.close();
+
+        // get conf
+        dir = new File(Constant.TMP_DIR + File.separator + "conf");
+        if (!dir.isDirectory())
+            dir.mkdirs();
+
+        BufferedWriter confWriter = new BufferedWriter(new FileWriter(Constant.TMP_DIR + File.separator + "conf" + File.separator + hivePartition));
+        for (Job job : jobs.getJobs().getJob()) {
+            String jobId = job.getId();
+            String confUrl = String.format(Constant.JOB_HISTORY_URL + "/ws/v1/history/mapreduce/jobs/%s/conf", jobId);
+            queryFinished(confUrl, jobId, params, confWriter);
+        }
+    }
+
+
+    public void rmApps(Map<String, String> params) throws Exception {
+        String appsUrl = Constant.RESOURCE_MANAGER_URL + "/ws/v1/cluster/apps/";
+        logger.info("appsUrl : " + appsUrl + "  params:" + params);
+
+        String resp = HttpUtils.get(appsUrl, null, params);
         if (StringUtils.isBlank(resp))
             return;
 
@@ -81,18 +121,10 @@ public class YarnCollect {
                 String applicationId = app.getId();
                 String jobId = applicationId.replaceAll("application", "job");
                 String state = app.getState();
-                String confUrl = null;
-                if ("FINISHED".equals(state)) {
-                    confUrl = String.format(Constant.JOB_HISTORY_URL + "/ws/v1/history/mapreduce/jobs/%s/conf", jobId);
+                String logAggregationStatus = app.getLogAggregationStatus();
+                if (!"FINISHED".equals(state) || !"SUCCEEDED".equals(logAggregationStatus)) {
+                    String confUrl = String.format(Constant.RESOURCE_MANAGER_URL + "/proxy/%s/ws/v1/mapreduce/jobs/%s/conf", applicationId, jobId);
                     queryFinished(confUrl, jobId, params, confWriter);
-                } else {
-                    try {
-                        confUrl = String.format(Constant.RESOURCE_MANAGER_URL + "/proxy/%s/ws/v1/mapreduce/jobs/%s/conf", applicationId, jobId);
-                        queryFinished(confUrl, jobId, params, confWriter);
-                    } catch (Exception e) {
-                        confUrl = String.format(Constant.JOB_HISTORY_URL + "/ws/v1/history/mapreduce/jobs/%s/conf", jobId);
-                        queryFinished(confUrl, jobId, params, confWriter);
-                    }
                 }
             }
         }
@@ -115,6 +147,9 @@ public class YarnCollect {
         params.put("startedTimeEnd", String.valueOf(c.getTimeInMillis()));
 
         hivePartition = args[0];
+        YarnCollect collect = new YarnCollect();
+        collect.rmApps(params);
+        collect.jobs(params);
         /*
         Calendar c = Calendar.getInstance();
         c.add(Calendar.HOUR, -2);
@@ -148,8 +183,6 @@ public class YarnCollect {
             logger.info(" use default states : RUNNING");
 //            params.put("states", "RUNNING");
         }*/
-
-        new YarnCollect().scanJobs(params);
     }
 
     private static Map<String, String> parseParam(String[] args) {

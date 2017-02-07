@@ -31,6 +31,23 @@ logAggregationStatus String
 ROW FORMAT DELIMITED
 FIELDS TERMINATED BY '\001';
 
+create table jobs(
+submitTime BIGINT ,
+startTime BIGINT ,
+finishTime BIGINT,
+id String,
+name String,
+queue String,
+user String,
+state String,
+mapsTotal BIGINT,
+mapsCompleted BIGINT,
+reducesTotal BIGINT,
+reducesCompleted BIGINT
+) partitioned by(dt String)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\001';
+
 create table jobconf(
 id String,
 param map<string,string>
