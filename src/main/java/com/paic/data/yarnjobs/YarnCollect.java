@@ -33,7 +33,7 @@ public class YarnCollect {
         StringBuilder buf = new StringBuilder();
         buf.append(jobId + Constant.HIVE_FIELD_SEPARATOR);
         try {
-            logger.info("try get job conf. URL : " + confUrl);
+//            logger.info("try get job conf. URL : " + confUrl);
             String resp = HttpUtils.get(confUrl, null, params);
 
             JSONObject confBean = JSONObject.parseObject(resp);
@@ -66,7 +66,7 @@ public class YarnCollect {
         if (!dir.isDirectory())
             dir.mkdirs();
 
-        BufferedWriter jobsWriter = new BufferedWriter(new FileWriter(Constant.TMP_DIR + File.separator + "apps" + File.separator + hivePartition));
+        BufferedWriter jobsWriter = new BufferedWriter(new FileWriter(Constant.TMP_DIR + File.separator + "jobs" + File.separator + hivePartition));
         for (Job job : jobs.getJobs().getJob()) {
             jobsWriter.append(job.toString());
             jobsWriter.append('\n');
@@ -78,12 +78,14 @@ public class YarnCollect {
         if (!dir.isDirectory())
             dir.mkdirs();
 
-        BufferedWriter confWriter = new BufferedWriter(new FileWriter(Constant.TMP_DIR + File.separator + "conf" + File.separator + hivePartition));
+        logger.info("try get job conf from job history.");
+        BufferedWriter confWriter = new BufferedWriter(new FileWriter(Constant.TMP_DIR + File.separator + "conf" + File.separator + hivePartition, true));
         for (Job job : jobs.getJobs().getJob()) {
             String jobId = job.getId();
             String confUrl = String.format(Constant.JOB_HISTORY_URL + "/ws/v1/history/mapreduce/jobs/%s/conf", jobId);
             queryFinished(confUrl, jobId, params, confWriter);
         }
+        confWriter.close();
     }
 
 
@@ -115,19 +117,18 @@ public class YarnCollect {
         if (!dir.isDirectory())
             dir.mkdirs();
 
-        BufferedWriter confWriter = new BufferedWriter(new FileWriter(Constant.TMP_DIR + File.separator + "conf" + File.separator + hivePartition));
+        BufferedWriter confWriter = new BufferedWriter(new FileWriter(Constant.TMP_DIR + File.separator + "conf" + File.separator + hivePartition, false));
         for (App app : apps.getApps().getApp()) {
-            if (app.getApplicationType().equals("MAPREDUCE")) {
-                String applicationId = app.getId();
-                String jobId = applicationId.replaceAll("application", "job");
-                String state = app.getState();
-                String logAggregationStatus = app.getLogAggregationStatus();
-                if (!"FINISHED".equals(state) || !"SUCCEEDED".equals(logAggregationStatus)) {
-                    String confUrl = String.format(Constant.RESOURCE_MANAGER_URL + "/proxy/%s/ws/v1/mapreduce/jobs/%s/conf", applicationId, jobId);
-                    queryFinished(confUrl, jobId, params, confWriter);
-                }
+            String trackingUI = app.getTrackingUI();
+            String applicationId = app.getId();
+            String jobId = applicationId.replaceAll("application", "job");
+            String applicationType = app.getApplicationType();
+            if ("MAPREDUCE".equals(applicationType) && "ApplicationMaster".equals(trackingUI)) {
+                String confUrl = String.format(Constant.RESOURCE_MANAGER_URL + "/proxy/%s/ws/v1/mapreduce/jobs/%s/conf", applicationId, jobId);
+                queryFinished(confUrl, jobId, params, confWriter);
             }
         }
+        confWriter.close();
 
     }
 
