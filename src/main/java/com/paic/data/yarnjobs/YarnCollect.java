@@ -68,7 +68,7 @@ public class YarnCollect {
 
         BufferedWriter jobsWriter = new BufferedWriter(new FileWriter(Constant.TMP_DIR + File.separator + "jobs" + File.separator + hivePartition));
         for (Job job : jobs.getJobs().getJob()) {
-            jobsWriter.append(job.toString());
+            jobsWriter.append(job.toHiveString());
             jobsWriter.append('\n');
         }
         jobsWriter.close();
@@ -107,7 +107,7 @@ public class YarnCollect {
 
         BufferedWriter appsWriter = new BufferedWriter(new FileWriter(Constant.TMP_DIR + File.separator + "apps" + File.separator + hivePartition));
         for (App app : apps.getApps().getApp()) {
-            appsWriter.append(app.toString());
+            appsWriter.append(app.toHiveString());
             appsWriter.append('\n');
         }
         appsWriter.close();

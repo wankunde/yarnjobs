@@ -51,4 +51,15 @@ public class ConstantUtil {
         }
         return "";
     }
+
+    public static boolean sendMail(String mail, String subject, String content) {
+        String url = "http://172.16.50.43:8080/data-scheduler-svc/v1/dsp/sendmail";
+        String mailContent = "to=" + mail + "&subject=" + subject + "&content=" + content;
+        try {
+            HttpUtils.post(url, mailContent);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

@@ -57,6 +57,24 @@ FIELDS TERMINATED BY '\001'
 COLLECTION ITEMS TERMINATED BY '\003'
 MAP KEYS TERMINATED BY '\004';
 
+create table running(
+submitTime BIGINT ,
+startTime BIGINT ,
+finishTime BIGINT,
+id String,
+name String,
+queue String,
+user String,
+state String,
+mapsTotal BIGINT,
+mapsCompleted BIGINT,
+reducesTotal BIGINT,
+reducesCompleted BIGINT,
+type String
+) partitioned by(dt String)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\001';
+
 
 select id from tmp.apps where dt=2017020711 limit 10;
 

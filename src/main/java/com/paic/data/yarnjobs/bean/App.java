@@ -13,28 +13,63 @@ public class App {
     private String queue;
     private String state;
     private String finalStatus;
-    private String progress;
+    private Double progress;
     private String trackingUI;
     private String trackingUrl;
     private String diagnostics;
     private String clusterId;
     private String applicationType;
     private String applicationTags;
-    private String startedTime;
-    private String finishedTime;
-    private String elapsedTime;
+    private Long startedTime;
+    private Long finishedTime;
+    private Long elapsedTime;
     private String amContainerLogs;
     private String amHostHttpAddress;
-    private String allocatedMB;
-    private String allocatedVCores;
-    private String runningContainers;
-    private String memorySeconds;
-    private String vcoreSeconds;
-    private String preemptedResourceMB;
-    private String preemptedResourceVCores;
-    private String numNonAMContainerPreempted;
-    private String numAMContainerPreempted;
+    private Long allocatedMB;
+    private Long allocatedVCores;
+    private Long runningContainers;
+    private Long memorySeconds;
+    private Long vcoreSeconds;
+    private Long preemptedResourceMB;
+    private Long preemptedResourceVCores;
+    private Long numNonAMContainerPreempted;
+    private Long numAMContainerPreempted;
     private String logAggregationStatus;
+
+    public String toHiveString() {
+        return Joiner.on(Constant.HIVE_FIELD_SEPARATOR)
+                .useForNull("NULL")
+                .join(
+                        id,
+                        user,
+                        name == null ? "NULL" : name.replaceAll("\n", " ").replaceAll("\r", " "),
+                        queue,
+                        state,
+                        finalStatus,
+                        progress,
+                        trackingUI,
+                        trackingUrl,
+                        diagnostics == null ? "NULL" :diagnostics.replaceAll("\n", " ").replaceAll("\r", " "),
+                        clusterId,
+                        applicationType,
+                        applicationTags,
+                        startedTime,
+                        finishedTime,
+                        elapsedTime,
+                        amContainerLogs == null ? "NULL" :amContainerLogs.replaceAll("\n", " ").replaceAll("\r", " "),
+                        amHostHttpAddress,
+                        allocatedMB,
+                        allocatedVCores,
+                        runningContainers,
+                        memorySeconds,
+                        vcoreSeconds,
+                        preemptedResourceMB,
+                        preemptedResourceVCores,
+                        numNonAMContainerPreempted,
+                        numAMContainerPreempted,
+                        logAggregationStatus == null ? "NULL" :logAggregationStatus.replaceAll("\n", " ").replaceAll("\r", " ")
+                ).toString();
+    }
 
     public String getId() {
         return id;
@@ -84,11 +119,11 @@ public class App {
         this.finalStatus = finalStatus;
     }
 
-    public String getProgress() {
+    public Double getProgress() {
         return progress;
     }
 
-    public void setProgress(String progress) {
+    public void setProgress(Double progress) {
         this.progress = progress;
     }
 
@@ -140,27 +175,27 @@ public class App {
         this.applicationTags = applicationTags;
     }
 
-    public String getStartedTime() {
+    public Long getStartedTime() {
         return startedTime;
     }
 
-    public void setStartedTime(String startedTime) {
+    public void setStartedTime(Long startedTime) {
         this.startedTime = startedTime;
     }
 
-    public String getFinishedTime() {
+    public Long getFinishedTime() {
         return finishedTime;
     }
 
-    public void setFinishedTime(String finishedTime) {
+    public void setFinishedTime(Long finishedTime) {
         this.finishedTime = finishedTime;
     }
 
-    public String getElapsedTime() {
+    public Long getElapsedTime() {
         return elapsedTime;
     }
 
-    public void setElapsedTime(String elapsedTime) {
+    public void setElapsedTime(Long elapsedTime) {
         this.elapsedTime = elapsedTime;
     }
 
@@ -180,75 +215,75 @@ public class App {
         this.amHostHttpAddress = amHostHttpAddress;
     }
 
-    public String getAllocatedMB() {
+    public Long getAllocatedMB() {
         return allocatedMB;
     }
 
-    public void setAllocatedMB(String allocatedMB) {
+    public void setAllocatedMB(Long allocatedMB) {
         this.allocatedMB = allocatedMB;
     }
 
-    public String getAllocatedVCores() {
+    public Long getAllocatedVCores() {
         return allocatedVCores;
     }
 
-    public void setAllocatedVCores(String allocatedVCores) {
+    public void setAllocatedVCores(Long allocatedVCores) {
         this.allocatedVCores = allocatedVCores;
     }
 
-    public String getRunningContainers() {
+    public Long getRunningContainers() {
         return runningContainers;
     }
 
-    public void setRunningContainers(String runningContainers) {
+    public void setRunningContainers(Long runningContainers) {
         this.runningContainers = runningContainers;
     }
 
-    public String getMemorySeconds() {
+    public Long getMemorySeconds() {
         return memorySeconds;
     }
 
-    public void setMemorySeconds(String memorySeconds) {
+    public void setMemorySeconds(Long memorySeconds) {
         this.memorySeconds = memorySeconds;
     }
 
-    public String getVcoreSeconds() {
+    public Long getVcoreSeconds() {
         return vcoreSeconds;
     }
 
-    public void setVcoreSeconds(String vcoreSeconds) {
+    public void setVcoreSeconds(Long vcoreSeconds) {
         this.vcoreSeconds = vcoreSeconds;
     }
 
-    public String getPreemptedResourceMB() {
+    public Long getPreemptedResourceMB() {
         return preemptedResourceMB;
     }
 
-    public void setPreemptedResourceMB(String preemptedResourceMB) {
+    public void setPreemptedResourceMB(Long preemptedResourceMB) {
         this.preemptedResourceMB = preemptedResourceMB;
     }
 
-    public String getPreemptedResourceVCores() {
+    public Long getPreemptedResourceVCores() {
         return preemptedResourceVCores;
     }
 
-    public void setPreemptedResourceVCores(String preemptedResourceVCores) {
+    public void setPreemptedResourceVCores(Long preemptedResourceVCores) {
         this.preemptedResourceVCores = preemptedResourceVCores;
     }
 
-    public String getNumNonAMContainerPreempted() {
+    public Long getNumNonAMContainerPreempted() {
         return numNonAMContainerPreempted;
     }
 
-    public void setNumNonAMContainerPreempted(String numNonAMContainerPreempted) {
+    public void setNumNonAMContainerPreempted(Long numNonAMContainerPreempted) {
         this.numNonAMContainerPreempted = numNonAMContainerPreempted;
     }
 
-    public String getNumAMContainerPreempted() {
+    public Long getNumAMContainerPreempted() {
         return numAMContainerPreempted;
     }
 
-    public void setNumAMContainerPreempted(String numAMContainerPreempted) {
+    public void setNumAMContainerPreempted(Long numAMContainerPreempted) {
         this.numAMContainerPreempted = numAMContainerPreempted;
     }
 
@@ -258,41 +293,5 @@ public class App {
 
     public void setLogAggregationStatus(String logAggregationStatus) {
         this.logAggregationStatus = logAggregationStatus;
-    }
-
-    @Override
-    public String toString() {
-        return Joiner.on(Constant.HIVE_FIELD_SEPARATOR)
-                .useForNull("NULL")
-                .join(
-                        id,
-                        user,
-                        name == null ? "NULL" : name.replaceAll("\n", " ").replaceAll("\r", " "),
-                        queue,
-                        state,
-                        finalStatus,
-                        progress,
-                        trackingUI,
-                        trackingUrl,
-                        diagnostics == null ? "NULL" :diagnostics.replaceAll("\n", " ").replaceAll("\r", " "),
-                        clusterId,
-                        applicationType,
-                        applicationTags,
-                        startedTime,
-                        finishedTime,
-                        elapsedTime,
-                        amContainerLogs == null ? "NULL" :amContainerLogs.replaceAll("\n", " ").replaceAll("\r", " "),
-                        amHostHttpAddress,
-                        allocatedMB,
-                        allocatedVCores,
-                        runningContainers,
-                        memorySeconds,
-                        vcoreSeconds,
-                        preemptedResourceMB,
-                        preemptedResourceVCores,
-                        numNonAMContainerPreempted,
-                        numAMContainerPreempted,
-                        logAggregationStatus == null ? "NULL" :logAggregationStatus.replaceAll("\n", " ").replaceAll("\r", " ")
-                ).toString();
     }
 }
