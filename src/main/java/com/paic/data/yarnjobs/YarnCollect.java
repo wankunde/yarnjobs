@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -29,7 +30,7 @@ public class YarnCollect {
 
     private static String hivePartition;
 
-    private void queryFinished(String confUrl, String jobId, Map<String, String> params, BufferedWriter confWriter) throws Exception {
+    private void queryFinished(String confUrl, String jobId, Map<String, String> params, BufferedWriter confWriter) {
         StringBuilder buf = new StringBuilder();
         buf.append(jobId + Constant.HIVE_FIELD_SEPARATOR);
         try {
@@ -48,7 +49,11 @@ public class YarnCollect {
             logger.error("get job conf error!", e2);
         }
         buf.append('\n');
-        confWriter.append(buf);
+        try {
+            confWriter.append(buf);
+        } catch (IOException e) {
+            logger.error("confWriter append error!", e);
+        }
     }
 
     public void jobs(Map<String, String> params) throws Exception {
@@ -89,11 +94,18 @@ public class YarnCollect {
     }
 
 
-    public void rmApps(Map<String, String> params) throws Exception {
+    public void rmApps(Map<String, String> params) {
         String appsUrl = Constant.RESOURCE_MANAGER_URL + "/ws/v1/cluster/apps/";
         logger.info("appsUrl : " + appsUrl + "  params:" + params);
 
-        String resp = HttpUtils.get(appsUrl, null, params);
+        String resp = null;
+        try {
+            resp = HttpUtils.get(appsUrl, null, params);
+        } catch (Exception e) {
+            logger.error("get job info error!", e);
+            return;
+        }
+
         if (StringUtils.isBlank(resp))
             return;
 
@@ -105,30 +117,55 @@ public class YarnCollect {
         if (!dir.isDirectory())
             dir.mkdirs();
 
-        BufferedWriter appsWriter = new BufferedWriter(new FileWriter(Constant.TMP_DIR + File.separator + "apps" + File.separator + hivePartition));
-        for (App app : apps.getApps().getApp()) {
-            appsWriter.append(app.toHiveString());
-            appsWriter.append('\n');
+        BufferedWriter appsWriter = null;
+        try {
+            appsWriter = new BufferedWriter(new FileWriter(Constant.TMP_DIR + File.separator + "apps" + File.separator + hivePartition));
+            for (App app : apps.getApps().getApp()) {
+                appsWriter.append(app.toHiveString());
+                appsWriter.append('\n');
+            }
+        } catch (IOException e) {
+            logger.error("appsWriter error!", e);
+        } finally {
+            if (appsWriter != null)
+                try {
+                    appsWriter.close();
+                } catch (IOException e) {
+                    logger.error("appsWriter error!", e);
+                }
         }
-        appsWriter.close();
+
 
         // get conf
         dir = new File(Constant.TMP_DIR + File.separator + "conf");
         if (!dir.isDirectory())
             dir.mkdirs();
 
-        BufferedWriter confWriter = new BufferedWriter(new FileWriter(Constant.TMP_DIR + File.separator + "conf" + File.separator + hivePartition, false));
-        for (App app : apps.getApps().getApp()) {
-            String trackingUI = app.getTrackingUI();
-            String applicationId = app.getId();
-            String jobId = applicationId.replaceAll("application", "job");
-            String applicationType = app.getApplicationType();
-            if ("MAPREDUCE".equals(applicationType) && "ApplicationMaster".equals(trackingUI)) {
-                String confUrl = String.format(Constant.RESOURCE_MANAGER_URL + "/proxy/%s/ws/v1/mapreduce/jobs/%s/conf", applicationId, jobId);
-                queryFinished(confUrl, jobId, params, confWriter);
+        BufferedWriter confWriter = null;
+        try {
+            confWriter = new BufferedWriter(new FileWriter(Constant.TMP_DIR + File.separator + "conf" + File.separator + hivePartition, false));
+            for (App app : apps.getApps().getApp()) {
+                String trackingUI = app.getTrackingUI();
+                String applicationId = app.getId();
+                String jobId = applicationId.replaceAll("application", "job");
+                String applicationType = app.getApplicationType();
+                if ("MAPREDUCE".equals(applicationType) && "ApplicationMaster".equals(trackingUI)) {
+                    String confUrl = String.format(Constant.RESOURCE_MANAGER_URL + "/proxy/%s/ws/v1/mapreduce/jobs/%s/conf", applicationId, jobId);
+                    queryFinished(confUrl, jobId, params, confWriter);
+                }
             }
+        } catch (IOException e) {
+            logger.error("confWriter error!", e);
+        } finally {
+            if(confWriter!=null)
+                try {
+                    confWriter.close();
+                } catch (IOException e) {
+                    logger.error("confWriter error!", e);
+                }
         }
-        confWriter.close();
+
+
 
     }
 
